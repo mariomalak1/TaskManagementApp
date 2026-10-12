@@ -40,5 +40,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne(t => t.User)
             .HasForeignKey(t => t.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(u => u.Email )
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
     }
 }
