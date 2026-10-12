@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TaskManagement.Application.Common.Interfaces;
 using TaskManagement.Infrastructure.Persistence;
+using TaskManagement.Infrastructure.Persistence.Repositories;
 using TaskManagement.Infrastructure.Security;
 
 namespace TaskManagement.Infrastructure;
@@ -15,6 +16,7 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();
 
         return services;
