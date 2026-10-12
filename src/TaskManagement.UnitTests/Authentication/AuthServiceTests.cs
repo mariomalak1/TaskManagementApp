@@ -4,6 +4,7 @@ using TaskManagement.Application.Authentication;
 using TaskManagement.Application.Authentication.Dtos;
 using TaskManagement.Application.Common.Exceptions;
 using TaskManagement.Application.Common.Interfaces;
+using TaskManagement.Application.Common.Models;
 using TaskManagement.Domain.Constants;
 using TaskManagement.Domain.Entities;
 using Xunit;
@@ -16,11 +17,12 @@ public class AuthServiceTests
     private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
     private readonly ITokenService _tokens = Substitute.For<ITokenService>();
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
+    private readonly IRefreshTokenRepository _refreshTokens = Substitute.For<IRefreshTokenRepository>();
     private readonly AuthService _sut;
 
     public AuthServiceTests()
     {
-        _sut = new AuthService(_users, _hasher, _tokens, _currentUser);
+        _sut = new AuthService(_users, _hasher, _tokens, _currentUser, _refreshTokens);
     }
 
     [Fact]
@@ -77,10 +79,62 @@ public class AuthServiceTests
         _users.GetByEmailAsync("a@a.com", Arg.Any<CancellationToken>()).Returns(user);
         _hasher.Verify("Passw0rd", "H").Returns(true);
         _tokens.GenerateToken(user).Returns("TOKEN");
+        _tokens.GenerateRefreshToken().Returns(new RefreshTokenResult
+        {
+            RawToken = "REFRESH",
+            TokenHash = "HASH",
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
 
         var result = await _sut.LoginAsync(new LoginRequest { Email = "a@a.com", Password = "Passw0rd" });
 
         result.AccessToken.Should().Be("TOKEN");
+        result.RefreshToken.Should().Be("REFRESH");
         result.User.Email.Should().Be("a@a.com");
+        await _refreshTokens.Received(1).AddAsync(
+            Arg.Is<RefreshToken>(t => t.UserId == user.Id && t.TokenHash == "HASH"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenTokenInactive_ThrowsUnauthorized()
+    {
+        _tokens.HashToken("bad").Returns("BADHASH");
+        _refreshTokens.GetByHashAsync("BADHASH", Arg.Any<CancellationToken>()).Returns((RefreshToken?)null);
+
+        Func<Task> act = () => _sut.RefreshAsync(new RefreshTokenRequest { RefreshToken = "bad" });
+
+        await act.Should().ThrowAsync<UnauthorizedException>();
+    }
+
+    [Fact]
+    public async Task RefreshAsync_WhenValid_RevokesOldAndIssuesNewTokens()
+    {
+        var user = new User { Id = Guid.NewGuid(), Name = "A", Email = "a@a.com", Role = UserRoles.User };
+        var stored = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            TokenHash = "OLDHASH",
+            ExpiresAt = DateTime.UtcNow.AddDays(1),
+            CreatedAt = DateTime.UtcNow
+        };
+        _tokens.HashToken("old").Returns("OLDHASH");
+        _refreshTokens.GetByHashAsync("OLDHASH", Arg.Any<CancellationToken>()).Returns(stored);
+        _users.GetByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
+        _tokens.GenerateToken(user).Returns("NEW_ACCESS");
+        _tokens.GenerateRefreshToken().Returns(new RefreshTokenResult
+        {
+            RawToken = "NEW_REFRESH",
+            TokenHash = "NEWHASH",
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        });
+
+        var result = await _sut.RefreshAsync(new RefreshTokenRequest { RefreshToken = "old" });
+
+        result.AccessToken.Should().Be("NEW_ACCESS");
+        result.RefreshToken.Should().Be("NEW_REFRESH");
+        stored.RevokedAt.Should().NotBeNull();
+        await _refreshTokens.Received(1).AddAsync(Arg.Any<RefreshToken>(), Arg.Any<CancellationToken>());
     }
 }
