@@ -13,12 +13,18 @@ public class TaskService : ITaskService
     private readonly ITaskRepository _taskRepository;
     private readonly ICurrentUser _currentUser;
     private readonly ICacheService _cache;
+    private readonly ITaskProcessingQueue _processingQueue;
 
-    public TaskService(ITaskRepository taskRepository, ICurrentUser currentUser, ICacheService cache)
+    public TaskService(
+        ITaskRepository taskRepository,
+        ICurrentUser currentUser,
+        ICacheService cache,
+        ITaskProcessingQueue processingQueue)
     {
         _taskRepository = taskRepository;
         _currentUser = currentUser;
         _cache = cache;
+        _processingQueue = processingQueue;
     }
 
     public async Task<TaskResponse> CreateAsync(CreateTaskRequest request, CancellationToken cancellationToken = default)
@@ -43,13 +49,15 @@ public class TaskService : ITaskService
 
         await _taskRepository.AddAsync(task, cancellationToken);
 
+        await _processingQueue.EnqueueAsync(task.Id, cancellationToken);
+
         return MapToResponse(task);
     }
 
     public async Task<TaskResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var userId = _currentUser.UserId;
-        var cacheKey = CacheKey(userId, id);
+        var cacheKey = TaskCacheKeys.ForTask(userId, id);
 
         var cached = await _cache.GetAsync<TaskResponse>(cacheKey, cancellationToken);
         if (cached is not null)
@@ -85,12 +93,10 @@ public class TaskService : ITaskService
 
         await _taskRepository.SaveChangesAsync(cancellationToken);
 
-        await _cache.RemoveAsync(CacheKey(task.UserId, task.Id), cancellationToken);
+        await _cache.RemoveAsync(TaskCacheKeys.ForTask(task.UserId, task.Id), cancellationToken);
 
         return MapToResponse(task);
     }
-
-    private static string CacheKey(Guid userId, Guid taskId) => $"task:{userId}:{taskId}";
 
     private static TaskResponse MapToResponse(TaskItem task)
     {

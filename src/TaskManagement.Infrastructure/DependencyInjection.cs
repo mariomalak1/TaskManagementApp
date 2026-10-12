@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 using TaskManagement.Application.Common.Interfaces;
+using TaskManagement.Infrastructure.BackgroundProcessing;
 using TaskManagement.Infrastructure.Caching;
 using TaskManagement.Infrastructure.Persistence;
 using TaskManagement.Infrastructure.Persistence.Repositories;
@@ -41,6 +42,9 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<ICacheService, RedisCacheService>();
+
+        services.AddSingleton<ITaskProcessingQueue, TaskProcessingQueue>();
+        services.AddHostedService<TaskProcessingWorker>();
 
         return services;
     }
