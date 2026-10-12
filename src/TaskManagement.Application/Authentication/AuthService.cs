@@ -11,15 +11,18 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
+    private readonly ICurrentUser _currentUser;
 
     public AuthService(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        ICurrentUser currentUser)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
+        _currentUser = currentUser;
     }
 
     public async Task<UserResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -60,6 +63,16 @@ public class AuthService : IAuthService
             User = MapToUserResponse(user),
             AccessToken = accessToken,
         };
+    }
+
+    public async Task<UserResponse> GetCurrentUserAsync(CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(_currentUser.UserId, cancellationToken);
+
+        if (user is null)
+            throw new NotFoundException("User not found.");
+
+        return MapToUserResponse(user);
     }
 
     private static UserResponse MapToUserResponse(User user)

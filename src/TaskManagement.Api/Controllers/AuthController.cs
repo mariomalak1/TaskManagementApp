@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagement.Application.Authentication.Dtos;
 using TaskManagement.Application.Common.Interfaces;
@@ -25,5 +26,13 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.LoginAsync(request, cancellationToken);
         return Ok(result);
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> Me(CancellationToken cancellationToken)
+    {
+        var user = await _authService.GetCurrentUserAsync(cancellationToken);
+        return Ok(user);
     }
 }
