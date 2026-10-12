@@ -1,13 +1,21 @@
+using System.Text.Json.Serialization;
 using TaskManagement.Api.Extensions;
 using TaskManagement.Api.Middleware;
+using TaskManagement.Api.Services;
 using TaskManagement.Application;
+using TaskManagement.Application.Common.Interfaces;
 using TaskManagement.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 builder.Services.AddApplication();
 
