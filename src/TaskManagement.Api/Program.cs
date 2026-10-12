@@ -12,7 +12,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-builder.Services.AddOpenApi();
+builder.Services.AddSwaggerDocumentation();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
@@ -32,10 +32,11 @@ app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
-    // for initialize database and create tables   
+    // for initialize database and create tables
     await app.Services.InitializeDatabaseAsync();
 
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
