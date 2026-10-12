@@ -1,9 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using TaskManagement.Application.Common.Interfaces;
+using TaskManagement.Application.Common.Models;
 using TaskManagement.Domain.Entities;
 
 namespace TaskManagement.Infrastructure.Security;
@@ -39,5 +41,23 @@ public class JwtTokenService : ITokenService
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public RefreshTokenResult GenerateRefreshToken()
+    {
+        var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+
+        return new RefreshTokenResult
+        {
+            RawToken = rawToken,
+            TokenHash = HashToken(rawToken),
+            ExpiresAt = DateTime.UtcNow.AddDays(_settings.RefreshTokenDays)
+        };
+    }
+
+    public string HashToken(string token)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(hash);
     }
 }
