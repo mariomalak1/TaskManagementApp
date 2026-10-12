@@ -38,11 +38,10 @@ public class TaskRepository : ITaskRepository
     {
         var start = dayUtc.Date;
         var end = start.AddDays(1);
-        var pattern = $"%{title}%";
-
+        
         return _context.Tasks.AnyAsync(
             t => t.UserId == userId
-                 && EF.Functions.Like(t.Title, pattern)
+                 && t.Title == title
                  && t.CreatedAt >= start
                  && t.CreatedAt < end,
             cancellationToken);
