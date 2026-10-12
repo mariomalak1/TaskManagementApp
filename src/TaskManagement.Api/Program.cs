@@ -1,3 +1,4 @@
+using TaskManagement.Api.Extensions;
 using TaskManagement.Api.Middleware;
 using TaskManagement.Application;
 using TaskManagement.Infrastructure;
@@ -11,6 +12,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -28,6 +31,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
