@@ -24,4 +24,20 @@ public class UsersController : ControllerBase
         var user = await _userService.CreateUserAsync(request, cancellationToken);
         return Created($"/api/users/{user.Id}", user);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    {
+        var users = await _userService.GetAllUsersAsync(cancellationToken);
+        return Ok(users);
+    }
+    
+    
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await _userService.DeleteUserAsync(id, cancellationToken);
+
+        return NoContent();
+    }
 }

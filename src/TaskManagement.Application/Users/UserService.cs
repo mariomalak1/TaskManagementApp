@@ -36,6 +36,34 @@ public class UserService : IUserService
 
         await _userRepository.AddAsync(user, cancellationToken);
 
+        return MapToUserResponse(user);
+    }
+
+    public async Task<IReadOnlyList<UserResponse>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+    {
+        var users = await _userRepository.GetAllAsync(cancellationToken);
+
+        return users.Select(MapToUserResponse).ToList();
+    }
+
+    
+    public async Task DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+
+        if (user is null)
+            throw new NotFoundException("User not found.");
+
+        user.SoftDelete();
+
+        await _userRepository.SaveChangesAsync(cancellationToken);
+    }
+    
+    
+
+
+    private static UserResponse MapToUserResponse(User user)
+    {
         return new UserResponse
         {
             Id = user.Id,
