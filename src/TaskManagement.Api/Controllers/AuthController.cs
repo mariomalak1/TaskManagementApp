@@ -19,4 +19,11 @@ public class AuthController : ControllerBase
         var user = await _authService.RegisterAsync(request, cancellationToken);
         return Created($"/api/users/{user.Id}", user);
     }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.LoginAsync(request, cancellationToken);
+        return Ok(result);
+    }
 }
