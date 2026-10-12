@@ -8,13 +8,17 @@ namespace TaskManagement.Application.Tasks;
 
 public class TaskService : ITaskService
 {
+    private static readonly TimeSpan CacheExpiry = TimeSpan.FromMinutes(10);
+
     private readonly ITaskRepository _taskRepository;
     private readonly ICurrentUser _currentUser;
+    private readonly ICacheService _cache;
 
-    public TaskService(ITaskRepository taskRepository, ICurrentUser currentUser)
+    public TaskService(ITaskRepository taskRepository, ICurrentUser currentUser, ICacheService cache)
     {
         _taskRepository = taskRepository;
         _currentUser = currentUser;
+        _cache = cache;
     }
 
     public async Task<TaskResponse> CreateAsync(CreateTaskRequest request, CancellationToken cancellationToken = default)
@@ -44,12 +48,23 @@ public class TaskService : ITaskService
 
     public async Task<TaskResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var task = await _taskRepository.GetByIdForUserAsync(id, _currentUser.UserId, cancellationToken);
+        var userId = _currentUser.UserId;
+        var cacheKey = CacheKey(userId, id);
+
+        var cached = await _cache.GetAsync<TaskResponse>(cacheKey, cancellationToken);
+        if (cached is not null)
+            return cached;
+
+        var task = await _taskRepository.GetByIdForUserAsync(id, userId, cancellationToken);
 
         if (task is null)
             throw new NotFoundException("Task not found.");
 
-        return MapToResponse(task);
+        var response = MapToResponse(task);
+
+        await _cache.SetAsync(cacheKey, response, CacheExpiry, cancellationToken);
+
+        return response;
     }
 
     public async Task<IReadOnlyList<TaskResponse>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -70,8 +85,12 @@ public class TaskService : ITaskService
 
         await _taskRepository.SaveChangesAsync(cancellationToken);
 
+        await _cache.RemoveAsync(CacheKey(task.UserId, task.Id), cancellationToken);
+
         return MapToResponse(task);
     }
+
+    private static string CacheKey(Guid userId, Guid taskId) => $"task:{userId}:{taskId}";
 
     private static TaskResponse MapToResponse(TaskItem task)
     {
