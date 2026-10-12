@@ -12,17 +12,20 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
     private readonly ICurrentUser _currentUser;
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
 
     public AuthService(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
         ITokenService tokenService,
-        ICurrentUser currentUser)
+        ICurrentUser currentUser,
+        IRefreshTokenRepository refreshTokenRepository)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
         _currentUser = currentUser;
+        _refreshTokenRepository = refreshTokenRepository;
     }
 
     public async Task<UserResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -56,12 +59,58 @@ public class AuthService : IAuthService
         if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedException("Invalid email or password.");
 
+        return await IssueTokensAsync(user, cancellationToken);
+    }
+
+    public async Task<AuthResponse> RefreshAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        var tokenHash = _tokenService.HashToken(request.RefreshToken);
+        var stored = await _refreshTokenRepository.GetByHashAsync(tokenHash, cancellationToken);
+
+        if (stored is null || !stored.IsActive)
+            throw new UnauthorizedException("Invalid or expired refresh token.");
+
+        stored.Revoke();
+        await _refreshTokenRepository.SaveChangesAsync(cancellationToken);
+
+        var user = await _userRepository.GetByIdAsync(stored.UserId, cancellationToken);
+        if (user is null)
+            throw new UnauthorizedException("Invalid or expired refresh token.");
+
+        return await IssueTokensAsync(user, cancellationToken);
+    }
+
+    public async Task LogoutAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        var tokenHash = _tokenService.HashToken(request.RefreshToken);
+        var stored = await _refreshTokenRepository.GetByHashAsync(tokenHash, cancellationToken);
+
+        if (stored is not null && stored.IsActive)
+        {
+            stored.Revoke();
+            await _refreshTokenRepository.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task<AuthResponse> IssueTokensAsync(User user, CancellationToken cancellationToken)
+    {
         var accessToken = _tokenService.GenerateToken(user);
+        var refreshToken = _tokenService.GenerateRefreshToken();
+
+        await _refreshTokenRepository.AddAsync(new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            TokenHash = refreshToken.TokenHash,
+            ExpiresAt = refreshToken.ExpiresAt,
+            CreatedAt = DateTime.UtcNow
+        }, cancellationToken);
 
         return new AuthResponse
         {
             User = MapToUserResponse(user),
             AccessToken = accessToken,
+            RefreshToken = refreshToken.RawToken
         };
     }
 
