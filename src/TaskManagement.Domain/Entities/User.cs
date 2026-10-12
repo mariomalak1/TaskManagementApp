@@ -1,8 +1,9 @@
+using TaskManagement.Domain.Common;
 using TaskManagement.Domain.Constants;
 
 namespace TaskManagement.Domain.Entities;
 
-public class User
+public class User : ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;

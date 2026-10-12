@@ -20,9 +20,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(256);
 
-        builder.HasIndex(u => u.Email)
-            .IsUnique();
-
         builder.Property(u => u.PasswordHash)
             .IsRequired()
             .HasMaxLength(512);
@@ -33,8 +30,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.CreatedAt)
             .IsRequired();
-
-        builder.HasQueryFilter(u => !u.IsDeleted);
 
         builder.HasMany(u => u.Tasks)
             .WithOne(t => t.User)
