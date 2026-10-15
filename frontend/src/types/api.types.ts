@@ -39,3 +39,11 @@ export interface TaskResponse {
   createdAt: string;
   userId: string;
 }
+
+export interface CreateTaskRequest {
+  title: string;
+  description: string;
+  priority: TaskPriority;
+}
+
+export const PRIORITY_RANK: Record<TaskPriority, number> = { High: 2, Medium: 1, Low: 0 };
