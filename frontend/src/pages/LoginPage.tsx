@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   Container,
+  Link,
   TextField,
   Typography,
 } from '@mui/material';
@@ -90,6 +91,13 @@ export default function LoginPage() {
               {error}
             </Alert>
           )}
+
+          <Typography variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
+            Don&apos;t have an account?{' '}
+            <Link component={RouterLink} to="/register">
+              Sign up
+            </Link>
+          </Typography>
         </CardContent>
       </Card>
     </Container>
