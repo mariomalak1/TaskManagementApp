@@ -11,3 +11,7 @@ export async function createUser(payload: CreateUserRequest): Promise<UserRespon
   const { data } = await apiClient.post<UserResponse>(API_ENDPOINTS.users.base, payload);
   return data;
 }
+
+export async function deleteUser(id: string): Promise<void> {
+  await apiClient.delete(API_ENDPOINTS.users.byId(id));
+}
