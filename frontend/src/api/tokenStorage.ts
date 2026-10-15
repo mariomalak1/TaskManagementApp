@@ -1,5 +1,8 @@
+import type { UserResponse } from '../types/api.types';
+
 const ACCESS_TOKEN_KEY = 'taskman.accessToken';
 const REFRESH_TOKEN_KEY = 'taskman.refreshToken';
+const USER_KEY = 'taskman.user';
 
 export interface AuthTokens {
   accessToken: string;
@@ -37,8 +40,21 @@ export const tokenStorage = {
     safeSet(ACCESS_TOKEN_KEY, accessToken);
     safeSet(REFRESH_TOKEN_KEY, refreshToken);
   },
+  getUser: (): UserResponse | null => {
+    const raw = safeGet(USER_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as UserResponse;
+    } catch {
+      return null;
+    }
+  },
+  setUser: (user: UserResponse): void => {
+    safeSet(USER_KEY, JSON.stringify(user));
+  },
   clear: (): void => {
     safeRemove(ACCESS_TOKEN_KEY);
     safeRemove(REFRESH_TOKEN_KEY);
+    safeRemove(USER_KEY);
   },
 };

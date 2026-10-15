@@ -13,10 +13,11 @@ import {
 } from '@mui/material';
 import { login } from '../api/auth.api';
 import { getApiErrorMessage } from '../api/client';
-import { tokenStorage } from '../api/tokenStorage';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { setSession } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +28,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       const result = await login({ email, password });
-      tokenStorage.setTokens(result);
+      setSession(result);
       navigate('/tasks', { replace: true });
     } catch (err) {
       setError(getApiErrorMessage(err));
