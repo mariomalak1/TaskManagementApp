@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { tokenStorage } from './tokenStorage';
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -13,6 +14,14 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Attach the stored access token to every request.
+apiClient.interceptors.request.use((config) => {
+  const token = tokenStorage.getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {

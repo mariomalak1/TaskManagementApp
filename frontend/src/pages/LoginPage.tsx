@@ -11,22 +11,20 @@ import {
 } from '@mui/material';
 import { login } from '../api/auth.api';
 import { getApiErrorMessage } from '../api/client';
-import type { UserResponse } from '../types/api.types';
+import { tokenStorage } from '../api/tokenStorage';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<UserResponse | null>(null);
 
   async function handleSubmit() {
     setError(null);
-    setUser(null);
     setSubmitting(true);
     try {
       const result = await login({ email, password });
-      setUser(result.user);
+      tokenStorage.setTokens(result);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -87,11 +85,6 @@ export default function LoginPage() {
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {error}
-            </Alert>
-          )}
-          {user && (
-            <Alert severity="success" sx={{ mt: 2 }}>
-              Signed in as {user.name} ({user.role}).
             </Alert>
           )}
         </CardContent>
