@@ -3,6 +3,7 @@ import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import TasksPage from './pages/TasksPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import NotFoundPage from './pages/NotFoundPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -22,7 +23,7 @@ export default function App() {
       </Route>
 
       <Route path="/" element={<Navigate to="/register" replace />} />
-      <Route path="*" element={<Navigate to="/register" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
