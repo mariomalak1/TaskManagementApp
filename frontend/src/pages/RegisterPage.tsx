@@ -15,7 +15,7 @@ export default function RegisterPage() {
     setServerError(null);
     setSubmitting(true);
     try {
-      await register(values);
+      await register({ name: values.name, email: values.email, password: values.password });
       navigate('/login', { replace: true });
     } catch (err) {
       setServerError(getApiErrorMessage(err));

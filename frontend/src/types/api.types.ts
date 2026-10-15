@@ -21,6 +21,13 @@ export interface RegisterRequest {
   password: string;
 }
 
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
 export interface AuthResponse {
   user: UserResponse;
   accessToken: string;

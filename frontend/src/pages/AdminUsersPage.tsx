@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Button,
   Card,
   CardContent,
   Chip,
@@ -14,6 +15,7 @@ import { getApiErrorMessage } from '../api/client';
 import type { UserResponse } from '../types/api.types';
 import AsyncState from '../components/AsyncState';
 import UsersTable from '../components/UsersTable';
+import CreateUserDialog from '../components/CreateUserDialog';
 
 export default function AdminUsersPage() {
   const theme = useTheme();
@@ -22,6 +24,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -42,11 +45,26 @@ export default function AdminUsersPage() {
     };
   }, []);
 
+  function handleCreated(user: UserResponse) {
+    setUsers((prev) => [user, ...prev]);
+    setDialogOpen(false);
+  }
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h1" sx={{ fontSize: '2rem', mb: 3 }}>
-        Users
-      </Typography>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 3 }}
+      >
+        <Typography variant="h1" sx={{ fontSize: '2rem' }}>
+          Users
+        </Typography>
+        <Button variant="contained" onClick={() => setDialogOpen(true)}>
+          Add user
+        </Button>
+      </Stack>
 
       <AsyncState
         loading={loading}
@@ -88,6 +106,12 @@ export default function AdminUsersPage() {
           <UsersTable users={users} />
         )}
       </AsyncState>
+
+      <CreateUserDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onCreated={handleCreated}
+      />
     </Container>
   );
 }

@@ -37,7 +37,7 @@ export default function CreateTaskDialog({ open, onClose, onCreated }: CreateTas
     if (open) {
       setTitle('');
       setDescription('');
-      setPriority();
+      setPriority('Medium');
       setTitleError(undefined);
       setServerError(null);
       setSubmitting(false);

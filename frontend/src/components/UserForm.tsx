@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Alert, Box, Button, TextField } from '@mui/material';
+import { Alert, Box, Button, MenuItem, TextField } from '@mui/material';
+import type { UserRole } from '../types/api.types';
 
 export interface UserFormValues {
   name: string;
   email: string;
   password: string;
+  role: UserRole;
 }
 
 interface FieldErrors {
@@ -18,6 +20,8 @@ interface UserFormProps {
   submitLabel: string;
   submitting: boolean;
   serverError?: string | null;
+  // When true, a Role select is shown (admin "create user"). Register leaves it off.
+  showRole?: boolean;
   onSubmit: (values: UserFormValues) => void;
 }
 
@@ -30,12 +34,14 @@ export default function UserForm({
   submitLabel,
   submitting,
   serverError,
+  showRole = false,
   onSubmit,
 }: UserFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('User');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   function validate(): FieldErrors {
@@ -64,7 +70,7 @@ export default function UserForm({
     const errors = validate();
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
-    onSubmit({ name: name.trim(), email, password });
+    onSubmit({ name: name.trim(), email, password, role });
   }
 
   return (
@@ -119,6 +125,21 @@ export default function UserForm({
         error={!!fieldErrors.confirmPassword}
         helperText={fieldErrors.confirmPassword}
       />
+
+      {showRole && (
+        <TextField
+          select
+          label="Role"
+          value={role}
+          onChange={(e) => setRole(e.target.value as UserRole)}
+          required
+          margin="normal"
+        >
+          <MenuItem value="User">User</MenuItem>
+          <MenuItem value="Admin">Admin</MenuItem>
+        </TextField>
+      )}
+
       <Button type="submit" variant="contained" disabled={submitting} fullWidth sx={{ mt: 2 }}>
         {submitting ? `${submitLabel}…` : submitLabel}
       </Button>
