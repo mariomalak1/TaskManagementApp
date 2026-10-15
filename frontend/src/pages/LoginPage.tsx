@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -14,6 +15,7 @@ import { getApiErrorMessage } from '../api/client';
 import { tokenStorage } from '../api/tokenStorage';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -25,6 +27,7 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password });
       tokenStorage.setTokens(result);
+      navigate('/tasks', { replace: true });
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {

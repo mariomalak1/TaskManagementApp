@@ -20,3 +20,16 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
 }
+
+export type TaskItemStatus = 'Pending' | 'InProgress' | 'Done';
+export type TaskPriority = 'Low' | 'Medium' | 'High';
+
+export interface TaskResponse {
+  id: string;
+  title: string;
+  description: string;
+  status: TaskItemStatus;
+  priority: TaskPriority;
+  createdAt: string;
+  userId: string;
+}
