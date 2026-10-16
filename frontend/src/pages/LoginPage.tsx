@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -18,6 +18,8 @@ import { useAuth } from '../context/AuthContext';
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setSession } = useAuth();
+  const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get('expired') === '1';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -50,6 +52,12 @@ export default function LoginPage() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Welcome back. Enter your credentials to continue.
           </Typography>
+
+          {sessionExpired && !error && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Your session expired. Please sign in again.
+            </Alert>
+          )}
 
           <Box
             component="form"
