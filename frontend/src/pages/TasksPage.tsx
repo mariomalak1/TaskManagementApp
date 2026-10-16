@@ -4,6 +4,7 @@ import {
   Container,
   MenuItem,
   Stack,
+  TablePagination,
   TextField,
   Typography,
   useMediaQuery,
@@ -11,7 +12,7 @@ import {
 } from '@mui/material';
 import { getAllTasks } from '../api/tasks.api';
 import { getApiErrorMessage } from '../api/client';
-import type { TaskItemStatus, TaskPriority, TaskResponse } from '../types/api.types';
+import type { TaskItemStatus, TaskResponse } from '../types/api.types';
 import AsyncState from '../components/AsyncState';
 import TasksTable from '../components/TasksTable';
 import TaskCard from '../components/TaskCard';
@@ -26,22 +27,14 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'Done', label: 'Done' },
 ];
 
-const PRIORITY_RANK: Record<TaskPriority, number> = { High: 2, Medium: 1, Low: 0 };
-
-// Mirrors the API order: priority (High -> Low), then newest first.
-function sortTasks(list: TaskResponse[]): TaskResponse[] {
-  return [...list].sort((a, b) => {
-    const byPriority = PRIORITY_RANK[b.priority] - PRIORITY_RANK[a.priority];
-    if (byPriority !== 0) return byPriority;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
-}
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
 export default function TasksPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [tasks, setTasks] = useState<TaskResponse[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,12 +42,19 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(0); // 0-based (MUI)
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Debounce the search input so we don't hit the API on every keystroke.
+  // Debounce the search input.
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 400);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // Back to the first page whenever the filters change.
+  useEffect(() => {
+    setPage(0);
+  }, [statusFilter, debouncedSearch]);
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -63,35 +63,29 @@ export default function TasksPage() {
       const result = await getAllTasks({
         status: statusFilter === 'all' ? undefined : statusFilter,
         search: debouncedSearch || undefined,
+        page: page + 1,
+        pageSize: rowsPerPage,
       });
       setTasks(result.data);
+      setTotalCount(result.totalCount);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, debouncedSearch]);
+  }, [statusFilter, debouncedSearch, page, rowsPerPage]);
 
   useEffect(() => {
     void loadTasks();
   }, [loadTasks]);
 
-  const matchesFilters = useCallback(
-    (task: TaskResponse) => {
-      const statusOk = statusFilter === 'all' || task.status === statusFilter;
-      const searchOk =
-        !debouncedSearch || task.title.toLowerCase().includes(debouncedSearch.toLowerCase());
-      return statusOk && searchOk;
-    },
-    [statusFilter, debouncedSearch],
-  );
-
-  function handleCreated(task: TaskResponse) {
-    // Only show the new task if it matches the active filters.
-    if (matchesFilters(task)) {
-      setTasks((prev) => sortTasks([task, ...prev]));
-    }
+  function handleCreated() {
     setDialogOpen(false);
+    if (page !== 0) {
+      setPage(0);
+    } else {
+      void loadTasks();
+    }
   }
 
   const hasFilters = statusFilter !== 'all' || debouncedSearch !== '';
@@ -139,7 +133,7 @@ export default function TasksPage() {
       <AsyncState
         loading={loading && tasks.length === 0}
         error={error}
-        isEmpty={!loading && tasks.length === 0}
+        isEmpty={!loading && totalCount === 0}
         emptyMessage={hasFilters ? 'No tasks match your filters.' : 'You have no tasks yet.'}
       >
         {isMobile ? (
@@ -152,6 +146,24 @@ export default function TasksPage() {
           <TasksTable tasks={tasks} />
         )}
       </AsyncState>
+
+      {totalCount > 0 && (
+        <TablePagination
+          component="div"
+          count={totalCount}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+          showFirstButton
+          showLastButton
+          
+        />
+      )}
 
       <CreateTaskDialog
         open={dialogOpen}

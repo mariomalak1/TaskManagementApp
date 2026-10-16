@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Button,
   Card,
@@ -7,6 +7,7 @@ import {
   Container,
   IconButton,
   Stack,
+  TablePagination,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -22,42 +23,47 @@ import UsersTable from '../components/UsersTable';
 import CreateUserDialog from '../components/CreateUserDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
 
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
+
 export default function AdminUsersPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user: currentUser } = useAuth();
 
   const [users, setUsers] = useState<UserResponse[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [userToDelete, setUserToDelete] = useState<UserResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
-    getAllUsers()
-      .then((result) => {
-        if (active) setUsers(result.data);
-      })
-      .catch((err: unknown) => {
-        if (active) setError(getApiErrorMessage(err));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+    try {
+      const result = await getAllUsers({ page: page + 1, pageSize: rowsPerPage });
+      setUsers(result.data);
+      setTotalCount(result.totalCount);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [page, rowsPerPage]);
 
-  function handleCreated(user: UserResponse) {
-    setUsers((prev) => [user, ...prev]);
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
+
+  function handleCreated() {
     setDialogOpen(false);
+    void loadUsers();
   }
 
   function requestDelete(user: UserResponse) {
@@ -75,8 +81,13 @@ export default function AdminUsersPage() {
     setDeleteError(null);
     try {
       await deleteUser(userToDelete.id);
-      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
       setUserToDelete(null);
+      // If that was the last row on a page past the first, step back a page.
+      if (users.length === 1 && page > 0) {
+        setPage((p) => p - 1);
+      } else {
+        await loadUsers();
+      }
     } catch (err) {
       setDeleteError(getApiErrorMessage(err));
     } finally {
@@ -101,9 +112,9 @@ export default function AdminUsersPage() {
       </Stack>
 
       <AsyncState
-        loading={loading}
+        loading={loading && users.length === 0}
         error={error}
-        isEmpty={users.length === 0}
+        isEmpty={!loading && totalCount === 0}
         emptyMessage="No users found."
       >
         {isMobile ? (
@@ -158,6 +169,23 @@ export default function AdminUsersPage() {
           <UsersTable users={users} currentUserId={currentUser?.id} onDelete={requestDelete} />
         )}
       </AsyncState>
+
+      {totalCount > 0 && (
+        <TablePagination
+          component="div"
+          count={totalCount}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+          showFirstButton
+          showLastButton
+        />
+      )}
 
       <CreateUserDialog
         open={dialogOpen}
