@@ -6,6 +6,6 @@ public interface ITaskService
 {
     Task<TaskResponse> CreateAsync(CreateTaskRequest request, CancellationToken cancellationToken = default);
     Task<TaskResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<TaskResponse>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TaskResponse>> GetAllAsync(TaskFilterRequest filter, CancellationToken cancellationToken = default);
     Task<TaskResponse> UpdateStatusAsync(Guid id, UpdateTaskStatusRequest request, CancellationToken cancellationToken = default);
 }

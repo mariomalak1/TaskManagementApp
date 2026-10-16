@@ -75,9 +75,14 @@ public class TaskService : ITaskService
         return response;
     }
 
-    public async Task<IReadOnlyList<TaskResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TaskResponse>> GetAllAsync(TaskFilterRequest filter, CancellationToken cancellationToken = default)
     {
-        var tasks = await _taskRepository.GetAllForUserAsync(_currentUser.UserId, cancellationToken);
+        
+        Console.WriteLine(filter);
+        var search = string.IsNullOrWhiteSpace(filter.Search) ? null : filter.Search.Trim();
+
+        var tasks = await _taskRepository.GetAllForUserAsync(
+            _currentUser.UserId, filter.Status, search, cancellationToken);
 
         return tasks.Select(MapToResponse).ToList();
     }

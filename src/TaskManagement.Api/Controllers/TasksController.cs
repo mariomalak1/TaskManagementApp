@@ -32,9 +32,9 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] TaskFilterRequest filter, CancellationToken cancellationToken)
     {
-        var tasks = await _taskService.GetAllAsync(cancellationToken);
+        var tasks = await _taskService.GetAllAsync(filter, cancellationToken);
         return Ok(tasks);
     }
 

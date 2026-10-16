@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Application.Common.Interfaces;
 using TaskManagement.Domain.Entities;
+using TaskManagement.Domain.Enums;
 
 namespace TaskManagement.Infrastructure.Persistence.Repositories;
 
@@ -25,10 +26,18 @@ public class TaskRepository : ITaskRepository
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<TaskItem>> GetAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TaskItem>> GetAllForUserAsync(
+        Guid userId, TaskItemStatus? status, string? search, CancellationToken cancellationToken = default)
     {
-        return await _context.Tasks
-            .Where(t => t.UserId == userId)
+        var query = _context.Tasks.Where(t => t.UserId == userId);
+
+        if (status.HasValue)
+            query = query.Where(t => t.Status == status.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(t => t.Title.Contains(search));
+
+        return await query
             .OrderByDescending(t => t.Priority)
             .ThenByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
