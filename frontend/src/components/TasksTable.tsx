@@ -1,4 +1,5 @@
 import {
+  Button,
   Paper,
   Table,
   TableBody,
@@ -8,6 +9,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import type { TaskResponse } from '../types/api.types';
 import StatusChip from './StatusChip';
 import PriorityChip from './PriorityChip';
@@ -22,6 +24,7 @@ export default function TasksTable({ tasks }: { tasks: TaskResponse[] }) {
             <TableCell>Priority</TableCell>
             <TableCell>Status</TableCell>
             <TableCell align="right">Created</TableCell>
+            <TableCell align="right">Details</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -57,6 +60,11 @@ export default function TasksTable({ tasks }: { tasks: TaskResponse[] }) {
                 <Typography variant="body2" color="text.secondary">
                   {new Date(task.createdAt).toLocaleDateString()}
                 </Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Button component={RouterLink} to={`/tasks/${task.id}`} size="small">
+                  Details
+                </Button>
               </TableCell>
             </TableRow>
           ))}

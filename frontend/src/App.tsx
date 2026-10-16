@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import TasksPage from './pages/TasksPage';
+import TaskDetailsPage from './pages/TaskDetailsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import NotFoundPage from './pages/NotFoundPage';
 import Layout from './components/Layout';
@@ -31,6 +32,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/tasks/:id" element={<TaskDetailsPage />} />
           <Route element={<ProtectedRoute requireAdmin />}>
             <Route path="/users" element={<AdminUsersPage />} />
           </Route>
