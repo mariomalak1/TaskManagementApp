@@ -26,8 +26,8 @@ public class TaskRepository : ITaskRepository
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<TaskItem>> GetAllForUserAsync(
-        Guid userId, TaskItemStatus? status, string? search, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<TaskItem> Items, int TotalCount)> GetPagedForUserAsync(
+        Guid userId, TaskItemStatus? status, string? search, int skip, int take, CancellationToken cancellationToken = default)
     {
         var query = _context.Tasks.Where(t => t.UserId == userId);
 
@@ -37,10 +37,16 @@ public class TaskRepository : ITaskRepository
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(t => t.Title.Contains(search));
 
-        return await query
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
             .OrderByDescending(t => t.Priority)
             .ThenByDescending(t => t.CreatedAt)
+            .Skip(skip)
+            .Take(take)
             .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public Task<bool> ExistsWithTitleOnDateAsync(Guid userId, string title, DateTime dayUtc, CancellationToken cancellationToken = default)

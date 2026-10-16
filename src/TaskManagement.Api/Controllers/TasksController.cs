@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagement.Application.Common.Interfaces;
+using TaskManagement.Application.Common.Models;
 using TaskManagement.Application.Tasks.Dtos;
 
 namespace TaskManagement.Api.Controllers;
@@ -32,10 +33,10 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] TaskFilterRequest filter, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] TaskFilterRequest filter, [FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var tasks = await _taskService.GetAllAsync(filter, cancellationToken);
-        return Ok(tasks);
+        var result = await _taskService.GetAllAsync(filter, pagination, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPatch("{id:guid}/status")]

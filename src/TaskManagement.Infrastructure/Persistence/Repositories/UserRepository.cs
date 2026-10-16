@@ -28,11 +28,18 @@ public class UserRepository : IUserRepository
         return _context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<User> Items, int TotalCount)> GetPagedAsync(int skip, int take, CancellationToken cancellationToken = default)
     {
-        return await _context.Users
-            .OrderBy(u => u.CreatedAt)
+        var query = _context.Users.OrderBy(u => u.CreatedAt);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .Skip(skip)
+            .Take(take)
             .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)

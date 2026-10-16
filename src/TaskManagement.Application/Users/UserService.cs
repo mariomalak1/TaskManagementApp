@@ -1,6 +1,7 @@
 using TaskManagement.Application.Authentication.Dtos;
 using TaskManagement.Application.Common.Exceptions;
 using TaskManagement.Application.Common.Interfaces;
+using TaskManagement.Application.Common.Models;
 using TaskManagement.Application.Users.Dtos;
 using TaskManagement.Domain.Entities;
 
@@ -39,11 +40,15 @@ public class UserService : IUserService
         return MapToUserResponse(user);
     }
 
-    public async Task<IReadOnlyList<UserResponse>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<UserResponse>> GetAllUsersAsync(PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        var users = await _userRepository.GetAllAsync(cancellationToken);
+        var (users, totalCount) = await _userRepository.GetPagedAsync(
+            pagination.Skip, pagination.NormalizedPageSize, cancellationToken);
 
-        return users.Select(MapToUserResponse).ToList();
+        var data = users.Select(MapToUserResponse).ToList();
+
+        return PagedResult<UserResponse>.Create(
+            data, pagination.NormalizedPage, pagination.NormalizedPageSize, totalCount);
     }
 
     
