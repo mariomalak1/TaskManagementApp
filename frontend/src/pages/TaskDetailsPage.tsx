@@ -19,6 +19,7 @@ import type { TaskItemStatus, TaskResponse } from '../types/api.types';
 import AsyncState from '../components/AsyncState';
 import StatusChip from '../components/StatusChip';
 import PriorityChip from '../components/PriorityChip';
+import { useTaskStream } from '../hooks/useTaskStream';
 
 const STATUSES: TaskItemStatus[] = ['Pending', 'InProgress', 'Done'];
 const STATUS_LABEL: Record<TaskItemStatus, string> = {
@@ -59,6 +60,13 @@ export default function TaskDetailsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Live status updates pushed by server event (SSE)
+  useTaskStream((update) => {
+    setTask((prev) =>
+      prev && prev.id === update.taskId ? { ...prev, status: update.status } : prev,
+    );
+  });
 
   async function handleUpdateStatus() {
     if (!task) return;

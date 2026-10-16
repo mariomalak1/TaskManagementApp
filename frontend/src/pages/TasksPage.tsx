@@ -17,6 +17,7 @@ import AsyncState from '../components/AsyncState';
 import TasksTable from '../components/TasksTable';
 import TaskCard from '../components/TaskCard';
 import CreateTaskDialog from '../components/CreateTaskDialog';
+import { useTaskStream } from '../hooks/useTaskStream';
 
 type StatusFilter = TaskItemStatus | 'all';
 
@@ -78,6 +79,15 @@ export default function TasksPage() {
   useEffect(() => {
     void loadTasks();
   }, [loadTasks]);
+
+  // Live status updates pushed by server event (SSE)
+  useTaskStream((update) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === update.taskId ? { ...task, status: update.status } : task,
+      ),
+    );
+  });
 
   function handleCreated() {
     setDialogOpen(false);

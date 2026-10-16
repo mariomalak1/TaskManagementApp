@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
     base: '/tasks',
     byId: (id: string) => `/tasks/${id}`,
     status: (id: string) => `/tasks/${id}/status`,
+    stream: '/tasks/stream',
   },
   users: {
     base: '/users',

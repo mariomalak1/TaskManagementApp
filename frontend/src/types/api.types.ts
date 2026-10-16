@@ -47,6 +47,11 @@ export interface TaskResponse {
   userId: string;
 }
 
+export interface TaskStatusUpdate {
+  taskId: string;
+  status: TaskItemStatus;
+}
+
 export interface CreateTaskRequest {
   title: string;
   description: string;

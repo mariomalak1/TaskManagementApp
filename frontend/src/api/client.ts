@@ -45,7 +45,7 @@ function flushPending(token: string | null): void {
   pendingRequests = [];
 }
 
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = tokenStorage.getRefreshToken();
   if (!refreshToken) return null;
   try {
