@@ -1,19 +1,30 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import type { CreateTaskRequest, TaskItemStatus, TaskResponse } from '../types/api.types';
+import type {
+  CreateTaskRequest,
+  PagedResult,
+  TaskItemStatus,
+  TaskResponse,
+} from '../types/api.types';
 
 export interface TaskListQuery {
   status?: TaskItemStatus;
   search?: string;
+  page?: number;
+  pageSize?: number;
 }
 
-export async function getAllTasks(query: TaskListQuery = {}): Promise<TaskResponse[]> {
-  const params: Record<string, string> = {};
+export async function getAllTasks(query: TaskListQuery = {}): Promise<PagedResult<TaskResponse>> {
+  const params: Record<string, string | number> = {};
   if (query.status) params.status = query.status;
   const search = query.search?.trim();
   if (search) params.search = search;
+  if (query.page) params.page = query.page;
+  if (query.pageSize) params.pageSize = query.pageSize;
 
-  const { data } = await apiClient.get<TaskResponse[]>(API_ENDPOINTS.tasks.base, { params });
+  const { data } = await apiClient.get<PagedResult<TaskResponse>>(API_ENDPOINTS.tasks.base, {
+    params,
+  });
   return data;
 }
 

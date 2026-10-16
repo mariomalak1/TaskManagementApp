@@ -60,11 +60,11 @@ export default function TasksPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getAllTasks({
+      const result = await getAllTasks({
         status: statusFilter === 'all' ? undefined : statusFilter,
         search: debouncedSearch || undefined,
       });
-      setTasks(data);
+      setTasks(result.data);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {

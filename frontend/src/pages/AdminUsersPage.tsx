@@ -41,8 +41,8 @@ export default function AdminUsersPage() {
     setLoading(true);
     setError(null);
     getAllUsers()
-      .then((data) => {
-        if (active) setUsers(data);
+      .then((result) => {
+        if (active) setUsers(result.data);
       })
       .catch((err: unknown) => {
         if (active) setError(getApiErrorMessage(err));

@@ -53,4 +53,12 @@ export interface CreateTaskRequest {
   priority: TaskPriority;
 }
 
+export interface PagedResult<T> {
+  data: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
 export const PRIORITY_RANK: Record<TaskPriority, number> = { High: 2, Medium: 1, Low: 0 };

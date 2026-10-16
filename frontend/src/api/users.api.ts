@@ -1,9 +1,20 @@
 import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
-import type { CreateUserRequest, UserResponse } from '../types/api.types';
+import type { CreateUserRequest, PagedResult, UserResponse } from '../types/api.types';
 
-export async function getAllUsers(): Promise<UserResponse[]> {
-  const { data } = await apiClient.get<UserResponse[]>(API_ENDPOINTS.users.base);
+export interface UserListQuery {
+  page?: number;
+  pageSize?: number;
+}
+
+export async function getAllUsers(query: UserListQuery = {}): Promise<PagedResult<UserResponse>> {
+  const params: Record<string, number> = {};
+  if (query.page) params.page = query.page;
+  if (query.pageSize) params.pageSize = query.pageSize;
+
+  const { data } = await apiClient.get<PagedResult<UserResponse>>(API_ENDPOINTS.users.base, {
+    params,
+  });
   return data;
 }
 
