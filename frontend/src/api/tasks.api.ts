@@ -2,8 +2,18 @@ import { apiClient } from './client';
 import { API_ENDPOINTS } from './endpoints';
 import type { CreateTaskRequest, TaskItemStatus, TaskResponse } from '../types/api.types';
 
-export async function getAllTasks(): Promise<TaskResponse[]> {
-  const { data } = await apiClient.get<TaskResponse[]>(API_ENDPOINTS.tasks.base);
+export interface TaskListQuery {
+  status?: TaskItemStatus;
+  search?: string;
+}
+
+export async function getAllTasks(query: TaskListQuery = {}): Promise<TaskResponse[]> {
+  const params: Record<string, string> = {};
+  if (query.status) params.status = query.status;
+  const search = query.search?.trim();
+  if (search) params.search = search;
+
+  const { data } = await apiClient.get<TaskResponse[]>(API_ENDPOINTS.tasks.base, { params });
   return data;
 }
 
