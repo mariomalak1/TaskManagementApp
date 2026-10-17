@@ -7,6 +7,7 @@ using TaskManagement.Infrastructure.BackgroundProcessing;
 using TaskManagement.Infrastructure.Caching;
 using TaskManagement.Infrastructure.Persistence;
 using TaskManagement.Infrastructure.Persistence.Repositories;
+using TaskManagement.Infrastructure.Realtime;
 using TaskManagement.Infrastructure.Security;
 
 namespace TaskManagement.Infrastructure;
@@ -44,6 +45,7 @@ public static class DependencyInjection
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<ICacheService, RedisCacheService>();
 
+        services.AddSingleton<ITaskEventPublisher, TaskEventHub>();
         services.AddSingleton<ITaskProcessingQueue, TaskProcessingQueue>();
         services.AddHostedService<TaskProcessingWorker>();
 

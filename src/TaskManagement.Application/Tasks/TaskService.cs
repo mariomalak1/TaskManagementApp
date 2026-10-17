@@ -1,5 +1,6 @@
 using TaskManagement.Application.Common.Exceptions;
 using TaskManagement.Application.Common.Interfaces;
+using TaskManagement.Application.Common.Models;
 using TaskManagement.Application.Tasks.Dtos;
 using TaskManagement.Domain.Entities;
 using TaskManagement.Domain.Enums;
@@ -75,11 +76,18 @@ public class TaskService : ITaskService
         return response;
     }
 
-    public async Task<IReadOnlyList<TaskResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<TaskResponse>> GetAllAsync(
+        TaskFilterRequest filter, PaginationQuery pagination, CancellationToken cancellationToken = default)
     {
-        var tasks = await _taskRepository.GetAllForUserAsync(_currentUser.UserId, cancellationToken);
+        var search = string.IsNullOrWhiteSpace(filter.Search) ? null : filter.Search.Trim();
 
-        return tasks.Select(MapToResponse).ToList();
+        var (tasks, totalCount) = await _taskRepository.GetPagedForUserAsync(
+            _currentUser.UserId, filter.Status, search, pagination.Skip, pagination.NormalizedPageSize, cancellationToken);
+
+        var data = tasks.Select(MapToResponse).ToList();
+
+        return PagedResult<TaskResponse>.Create(
+            data, pagination.NormalizedPage, pagination.NormalizedPageSize, totalCount);
     }
 
     public async Task<TaskResponse> UpdateStatusAsync(Guid id, UpdateTaskStatusRequest request, CancellationToken cancellationToken = default)

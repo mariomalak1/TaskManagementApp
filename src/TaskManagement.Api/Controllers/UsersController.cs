@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagement.Application.Common.Interfaces;
+using TaskManagement.Application.Common.Models;
 using TaskManagement.Application.Users.Dtos;
 using TaskManagement.Domain.Constants;
 
@@ -26,9 +27,9 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] PaginationQuery pagination, CancellationToken cancellationToken)
     {
-        var users = await _userService.GetAllUsersAsync(cancellationToken);
+        var users = await _userService.GetAllUsersAsync(pagination, cancellationToken);
         return Ok(users);
     }
     

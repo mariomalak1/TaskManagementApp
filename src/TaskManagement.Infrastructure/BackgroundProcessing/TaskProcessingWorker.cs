@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TaskManagement.Application.Common.Interfaces;
+using TaskManagement.Application.Common.Models;
 using TaskManagement.Application.Tasks;
 using TaskManagement.Domain.Enums;
 using TaskManagement.Infrastructure.Persistence;
@@ -15,15 +16,18 @@ public class TaskProcessingWorker : BackgroundService
 
     private readonly ITaskProcessingQueue _queue;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITaskEventPublisher _eventPublisher;
     private readonly ILogger<TaskProcessingWorker> _logger;
 
     public TaskProcessingWorker(
         ITaskProcessingQueue queue,
         IServiceScopeFactory scopeFactory,
+        ITaskEventPublisher eventPublisher,
         ILogger<TaskProcessingWorker> logger)
     {
         _queue = queue;
         _scopeFactory = scopeFactory;
+        _eventPublisher = eventPublisher;
         _logger = logger;
     }
 
@@ -64,6 +68,9 @@ public class TaskProcessingWorker : BackgroundService
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await cache.RemoveAsync(TaskCacheKeys.ForTask(task.UserId, task.Id), cancellationToken);
+
+        // send notification for user of task with new task status 
+        _eventPublisher.Publish(task.UserId, new TaskStatusChangedEvent(task.Id, task.Status));
 
         _logger.LogInformation("Task {TaskId} processed and moved to InProgress.", taskId);
     }

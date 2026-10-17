@@ -61,3 +61,34 @@ nunit-*.xml
 .env
 
 *.sln.DotSettings.user
+
+
+# ==========================================
+# React / Vite / Node.js
+# ==========================================
+
+# Dependencies
+frontend/node_modules/
+
+# Production build
+frontend/dist/
+
+# Local environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/pnpm-debug.log*
+
+# Vite cache
+frontend/node_modules/.vite/
+
+# TypeScript incremental build
+frontend/*.tsbuildinfo
+
+# Editor files
+frontend/.vscode/

@@ -1,0 +1,6 @@
+/* Baseline is handled by MUI <CssBaseline />. Only full-height roots live here. */
+html,
+body,
+#root {
+  height: 100%;
+}
